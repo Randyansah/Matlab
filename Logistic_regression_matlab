@@ -1,0 +1,104 @@
+data=readtable("diabetes2.csv")
+hold on
+plot(data.Pregnancies,data.Glucose,'x')
+xlabel("Pregnancies")
+ylabel("Glucose")
+title("Diabetes plot 1")
+hold off
+
+
+scatter(data.Pregnancies,data.Glucose)
+xlabel("Pregnancies")
+ylabel("Glucose")
+title("Diabetes plot 2")
+
+gscatter(data.Pregnancies,data.Glucose,data.BloodPressure)
+xlabel("Pregnancies")
+ylabel("Glucose")
+title("Diabetes plot 3")
+
+
+plot(data.Outcome,data.DiabetesPedigreeFunction,'x')
+xlabel("Outcome")
+ylabel("DiabetesPedigreeFunction")
+title("Graph of people who have diabetes")
+
+gscatter(data.DiabetesPedigreeFunction,data.BloodPressure,data.Outcome)
+xlabel("Diabetes Pedigree Function ")
+ylabel("blood pressure")
+legend("Has Diabetes","No Diabetes")
+title("A graph of people who has diabetes")
+
+
+
+
+
+p=0.7 %Using 70% of the data for training
+x=[data.DiabetesPedigreeFunction,data.BloodPressure]
+y=(data.Outcome)
+y=y+1
+m=length(y)
+idx=randperm(m)
+xtrain=x(idx(1:round(p*m)),:);
+ytrain=y(idx(1:round(p*m)),:);
+
+xtest=x(idx(round(p*m)+1:end),:);
+ytest=y(idx(round(p*m)+1:end),:);
+
+B=mnrfit(xtrain,ytrain);
+
+%training  set
+mtrain=length(ytrain);
+xtrain2=[ones(mtrain,1),xtrain];
+ztrain=xtrain2*B;
+htrain=1.0./(1+exp(-ztrain))
+
+%test set
+mtest=length(ytest);
+xtest2=[ones(mtest,1),xtest];
+ztest=xtest2*B;
+htest=1.0./(1+exp(-ztest))
+
+histogram(htrain,10)
+histogram(htest,10)
+
+scatter(xtrain(:,1),xtrain(:,2),ytrain,htrain)
+cb=colorbar();
+
+scatter(xtest(:,1),xtest(:,2),ytest,htest)
+cb=colorbar();
+
+gscatter(x(:,1),x(:,2),y)
+hold on;
+xlabel("Diabetes Pedigree Function ")
+ylabel("blood pressure")
+legend("Has Diabetes","No Diabetes")
+title("A graph of people who has diabetes")
+plot(x(:,1),-(B(1)*1+B(2)*x(:,1))/B(3)); hold off;
+
+
+%training set
+ytrainpred=htrain<0.5
+ytrainpred=ytrainpred+1
+gscatter(xtrain(:,1),xtrain(:,2),ytrainpred)
+accuracy_training=mean(double(ytrainpred==ytrain))*100
+
+
+%test set
+ytestpred=htest<0.5
+ytestpred=ytestpred+1
+gscatter(xtest(:,1),xtest(:,2),ytestpred)
+accuracy_test=mean(double(ytestpred==ytest))*100
+
+
+%Precision and Recall
+Truely_has_Diabetes=sum(double(ytest==2))
+predicted_has_diabetes=sum(double(ytestpred==2))
+true_positive=sum(double(ytest==2) .* double(ytestpred==2))
+
+precision=true_positive/predicted_has_diabetes
+
+recall=true_positive/Truely_has_Diabetes
+
+%F1_score
+f1=2*precision*recall/(precision+recall)
